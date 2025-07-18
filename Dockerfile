@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install them
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install tensorflow==2.18.0 keras==3.0.5 && pip install -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy entire project
 COPY . .
