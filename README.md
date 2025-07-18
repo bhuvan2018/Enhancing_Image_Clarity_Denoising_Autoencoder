@@ -39,8 +39,8 @@ A deep learning-based web application for deblurring low-quality face images usi
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/face-deblurring-app.git
-cd face-deblurring-app
+git clone https://github.com/bhuvan2018/Enhancing_Image_Clarity_Denoising_Autoencoder.git
+cd Enhancing_Image_Clarity_Denoising_Autoencoder
 ````
 
 ### 2. Install Requirements
