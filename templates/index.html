@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Image Deblurring | Neural Enhancement</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.28/bundled/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lenis/1.0.42/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    *{font-family:'Space Grotesk',sans-serif;}
+    
+    .glass{backdrop-filter:blur(20px);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.3);}
+    .glow{box-shadow:0 0 40px rgba(139,69,255,.6),0 0 80px rgba(139,69,255,.3);}
+    
+    .upload-zone{
+      border:2px dashed rgba(139,69,255,.4);
+      transition:all .4s cubic-bezier(.25,.46,.45,.94);
+      position:relative;
+      overflow:hidden;
+      cursor:pointer;
+      background:radial-gradient(circle at 50% 50%,rgba(139,69,255,.05) 0%,transparent 70%);
+    }
+    .upload-zone:hover{
+      border-color:rgba(139,69,255,1);
+      background:radial-gradient(circle at 50% 50%,rgba(139,69,255,.15) 0%,transparent 70%);
+      transform:scale(1.02);
+    }
+    .upload-zone.drag-over{
+      border-color:rgba(255,107,107,1);
+      background:radial-gradient(circle at 50% 50%,rgba(255,107,107,.15) 0%,transparent 70%);
+      transform:scale(1.05);
+    }
+    
+    .upload-zone::before{
+      content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+      background:conic-gradient(from 0deg,transparent,rgba(139,69,255,.15),transparent);
+      animation:spin 4s linear infinite;opacity:0;transition:opacity .3s;
+    }
+    .upload-zone:hover::before{opacity:1;}
+    
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    @keyframes float{0%,100%{transform:translateY(0px);}50%{transform:translateY(-10px);}}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+    @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+    
+    .result-card{
+      transform:perspective(1000px) rotateY(0deg);
+      transition:all .6s cubic-bezier(.25,.46,.45,.94);
+    }
+    .result-card:hover{
+      transform:perspective(1000px) rotateY(3deg) translateZ(30px);
+      box-shadow:0 20px 40px rgba(0,0,0,.4);
+    }
+    
+    .metric-badge{
+      background:linear-gradient(135deg,rgba(139,69,255,.25),rgba(255,107,107,.25));
+      border:1px solid rgba(139,69,255,.4);
+      backdrop-filter:blur(15px);
+      transition:all .3s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .metric-badge::before{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+      transition:left .5s;
+    }
+    .metric-badge:hover::before{left:100%;}
+    .metric-badge:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(139,69,255,.3);}
+    
+    .btn-glow{
+      background:linear-gradient(45deg,#8b45ff,#ff6b6b,#4ecdc4);
+      background-size:300% 300%;
+      animation:gradientShift 3s ease infinite;
+      position:relative;
+      overflow:hidden;
+      border:none;
+      box-shadow:0 4px 15px rgba(139,69,255,.4);
+    }
+    .btn-glow::before{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+      animation:shine 2s infinite;
+    }
+    .btn-glow:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(139,69,255,.6);}
+    
+    @keyframes gradientShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    @keyframes shine{0%{left:-100%;}100%{left:100%;}}
+    
+    .image-container{
+      position:relative;width:100%;min-height:220px;
+      background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+      border-radius:12px;display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,.1);
+      transition:all .3s ease;
+    }
+    .image-container:hover{box-shadow:0 8px 30px rgba(139,69,255,.2);}
+    .image-container img{max-width:100%;max-height:300px;object-fit:contain;border-radius:8px;}
+    
+    .placeholder{color:rgba(255,255,255,.4);text-align:center;padding:2rem;animation:pulse 2s infinite;}
+    
+    .loading-spinner{
+      width:50px;height:50px;
+      border:4px solid rgba(139,69,255,.2);
+      border-top:4px solid #8b45ff;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    
+    .neural-bg{
+      position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;
+      background:radial-gradient(circle at 20% 80%,rgba(139,69,255,.1) 0%,transparent 50%),
+                 radial-gradient(circle at 80% 20%,rgba(255,107,107,.1) 0%,transparent 50%);
+    }
+    
+    .progress-bar{
+      height:4px;background:linear-gradient(90deg,#8b45ff,#ff6b6b);
+      border-radius:2px;transition:width .3s ease;
+    }
+    
+    .floating-icon{animation:float 3s ease-in-out infinite;}
+    
+    .navbar{
+      background:rgba(0,0,0,.3);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(255,255,255,.1);
+    }
+    
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:1rem;
+    }
+    
+    .comparison-slider{
+      position:relative;
+      overflow:hidden;
+      border-radius:12px;
+      height:300px;
+    }
+    .comparison-slider img{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    .comparison-slider .overlay{
+      position:absolute;
+      top:0;
+      right:0;
+      width:50%;
+      height:100%;
+      overflow:hidden;
+    }
+    .comparison-slider .slider-handle{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:4px;
+      height:100%;
+      background:#8b45ff;
+      cursor:ew-resize;
+      z-index:10;
+    }
+    .comparison-slider .slider-handle::before{
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:20px;
+      height:20px;
+      background:#8b45ff;
+      border-radius:50%;
+      box-shadow:0 0 20px rgba(139,69,255,.5);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-base-100 to-base-200 min-h-screen">
+  <div class="neural-bg"></div>
+  
+  <!-- Navbar -->
+  <div class="navbar fixed top-0 z-50 px-6">
+    <div class="navbar-start">
+      <a href="/" class="btn btn-ghost text-xl font-bold text-primary">
+        <span class="floating-icon">🧠</span> NeuralVision
+      </a>
+    </div>
+    <div class="navbar-end">
+      <a href="/" class="btn btn-ghost">Home</a>
+      <a href="/in" class="btn btn-ghost">Deblur</a>
+      <button class="btn btn-ghost" onclick="document.getElementById('info_modal').showModal()">
+        ℹ️ Info
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-6 pt-24 pb-12">
+    <div class="text-center mb-12">
+      <h1 class="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
+        AI Image Enhancement
+      </h1>
+      <p class="text-xl text-gray-300 mb-6">Upload your blurry image and watch the magic happen</p>
+      <div class="flex justify-center space-x-4">
+        <div class="badge badge-outline badge-lg">Neural Network</div>
+        <div class="badge badge-outline badge-lg">CBAM-U-Net</div>
+        <div class="badge badge-outline badge-lg">Real-time</div>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="card glass w-full max-w-3xl mx-auto mb-8">
+      <div class="card-body">
+        <form id="upload-form" enctype="multipart/form-data">
+          <div class="upload-zone rounded-xl p-16 text-center relative" onclick="document.getElementById('image').click()">
+            <div class="relative z-10">
+              <div class="text-7xl mb-6 floating-icon">📸</div>
+              <h3 class="text-2xl font-semibold mb-3 text-primary">Drop your image here</h3>
+              <p class="text-gray-300 mb-6">Or click to select from your device</p>
+              <input type="file" id="image" name="image" accept="image/*" required class="hidden"/>
+              <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('image').click()">
+                Choose File
+              </button>
+            </div>
+          </div>
+          
+          <div class="text-center mt-8">
+            <button type="submit" class="btn-glow btn btn-lg text-white border-0 px-12 py-4" id="enhanceBtn">
+              ✨ Enhance Image
+            </button>
+          </div>
+        </form>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center mt-8 hidden">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-primary text-lg pulse">Processing with AI...</p>
+          <div class="w-64 bg-gray-700 rounded-full h-2 mx-auto mt-4">
+            <div class="progress-bar w-0" id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Image Results -->
+      <div class="result-card card glass">
+        <div class="card-body">
+          <h2 class="card-title text-primary mb-6 text-2xl">
+            <span class="floating-icon">📊</span> Results
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="text-center">
+              <h4 class="text-lg font-semibold mb-3 text-gray-200">Original</h4>
+              <div class="image-container">
+                <img id="inputPreview" class="hidden glow" alt="Original Image"/>
+                <div id="originalPlaceholder" class="placeholder">
+                  <div class="text-4xl mb-2">🖼️</div>
+                  Original image will appear here
+                </div>
+              </div>
+            </div>
+            <div class="text-center">
+              <h4 class="text-lg font-semibold mb-3 text-gray-200">Enhanced</h4>
+              <div class="image-container">
+                <img id="output-img" class="hidden glow" alt="Enhanced Image"/>
+                <div id="enhancedPlaceholder" class="placeholder">
+                  <div class="text-4xl mb-2">✨</div>
+                  Enhanced image will appear here
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="result-card card glass">
+        <div class="card-body">
+          <h2 class="card-title text-primary mb-6 text-2xl">
+            <span class="floating-icon">📈</span> Quality Metrics
+          </h2>
+          <div class="stats-grid">
+            <div class="metric-badge rounded-xl p-4 text-center">
+              <div class="text-3xl font-bold text-primary" id="psnr-value">--</div>
+              <div class="text-sm text-gray-300">PSNR (dB)</div>
+            </div>
+            <div class="metric-badge rounded-xl p-4 text-center">
+              <div class="text-3xl font-bold text-primary" id="ssim-value">--</div>
+              <div class="text-sm text-gray-300">SSIM</div>
+            </div>
+            <div class="metric-badge rounded-xl p-4 text-center">
+              <div class="text-3xl font-bold text-primary" id="mae-value">--</div>
+              <div class="text-sm text-gray-300">MAE</div>
+            </div>
+            <div class="metric-badge rounded-xl p-4 text-center">
+              <div class="text-3xl font-bold text-primary" id="mse-value">--</div>
+              <div class="text-sm text-gray-300">MSE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div id="chart-container" class="card glass hidden">
+        <div class="card-body">
+          <h3 class="card-title text-primary text-xl mb-4">📊 Metric Analysis</h3>
+          <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="comparisonChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div id="noise-chart-container" class="card glass hidden">
+        <div class="card-body">
+          <h3 class="card-title text-primary text-xl mb-4">🔍 Noise Distribution</h3>
+          <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="noiseChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Section -->
+    <div class="text-center">
+      <a id="downloadBtn" class="btn-glow btn btn-lg text-white border-0 px-8 mr-4 hidden" download="enhanced.png">
+        💾 Download Enhanced
+      </a>
+      <a href="/download_csv" class="btn btn-outline btn-primary btn-lg">📄 Download CSV</a>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <dialog id="info_modal" class="modal">
+    <div class="modal-box glass max-w-md">
+      <h3 class="font-bold text-2xl text-primary mb-6">🧠 Project Information</h3>
+      <div class="space-y-4">
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🤖</span>
+          <div>
+            <strong>Model:</strong> CBAM-enhanced Residual Attention U-Net
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">⚡</span>
+          <div>
+            <strong>Loss:</strong> Perceptual Loss + Pixel Loss
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">📊</span>
+          <div>
+            <strong>Metrics:</strong> PSNR, SSIM, MAE, MSE
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🎯</span>
+          <div>
+            <strong>Dataset:</strong> GoPro Dataset (Deblurring)
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🛠️</span>
+          <div>
+            <strong>Framework:</strong> TensorFlow, Flask, Chart.js
+          </div>
+        </div>
+      </div>
+      <div class="modal-action">
+        <button class="btn btn-primary" onclick="document.getElementById('info_modal').close()">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // Initialize Lenis smooth scrolling
+    let lenis;
+    try {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+      });
+      
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+    } catch (error) {
+      console.warn('Lenis not available:', error);
+    }
+
+    // File input change handler
+    document.getElementById("image").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const inputPreview = document.getElementById("inputPreview");
+          const originalPlaceholder = document.getElementById("originalPlaceholder");
+          
+          inputPreview.src = e.target.result;
+          inputPreview.classList.remove("hidden");
+          originalPlaceholder.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Upload form handler
+    document.getElementById("upload-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      
+      const imageInput = document.getElementById("image");
+      const imageFile = imageInput.files[0];
+      
+      if (!imageFile) {
+        alert("Please select an image first!");
+        return;
+      }
+
+      // Show loading with progress
+      const loading = document.getElementById("loading");
+      const enhanceBtn = document.getElementById("enhanceBtn");
+      const progressBar = document.getElementById("progressBar");
+      
+      loading.classList.remove("hidden");
+      enhanceBtn.disabled = true;
+      enhanceBtn.textContent = "Processing...";
+
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + "%";
+      }, 200);
+
+      // Hide previous results
+      const outputImg = document.getElementById("output-img");
+      const enhancedPlaceholder = document.getElementById("enhancedPlaceholder");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const chartContainer = document.getElementById("chart-container");
+      const noiseChartContainer = document.getElementById("noise-chart-container");
+      
+      outputImg.classList.add("hidden");
+      enhancedPlaceholder.style.display = "block";
+      downloadBtn.classList.add("hidden");
+      chartContainer.classList.add("hidden");
+      noiseChartContainer.classList.add("hidden");
+
+      // Reset metrics
+      document.getElementById("psnr-value").textContent = "--";
+      document.getElementById("ssim-value").textContent = "--";
+      document.getElementById("mae-value").textContent = "--";
+      document.getElementById("mse-value").textContent = "--";
+
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      fetch("/predict", {
+        method: "POST",
+        body: formData,
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        clearInterval(progressInterval);
+        progressBar.style.width = "100%";
+        
+        setTimeout(() => {
+          // Display enhanced image
+          const base64Image = data.image;
+          outputImg.src = `data:image/png;base64,${base64Image}`;
+          outputImg.classList.remove("hidden");
+          enhancedPlaceholder.style.display = "none";
+
+          // Update metrics with animation
+          const psnr = parseFloat(data.psnr || 0).toFixed(2);
+          const ssim = parseFloat(data.ssim || 0).toFixed(4);
+          const mae = parseFloat(data.mae || 0).toFixed(4);
+          const mse = parseFloat(data.mse || 0).toFixed(4);
+
+          animateValue("psnr-value", 0, psnr, 1000);
+          animateValue("ssim-value", 0, ssim, 1000);
+          animateValue("mae-value", 0, mae, 1000);
+          animateValue("mse-value", 0, mse, 1000);
+
+          // Show charts
+          chartContainer.classList.remove("hidden");
+          drawMetricChart(psnr, ssim, mae, mse);
+
+          if (data.noise_hist && data.bin_edges) {
+            noiseChartContainer.classList.remove("hidden");
+            drawNoiseHistogram(data.noise_hist, data.bin_edges);
+          }
+
+          // Setup download
+          const blob = b64toBlob(base64Image, "image/png");
+          const blobUrl = URL.createObjectURL(blob);
+          downloadBtn.href = blobUrl;
+          downloadBtn.classList.remove("hidden");
+        }, 500);
+      })
+      .catch(error => {
+        clearInterval(progressInterval);
+        console.error("Error:", error);
+        alert("Something went wrong. Please try again. Error: " + error.message);
+      })
+      .finally(() => {
+        setTimeout(() => {
+          loading.classList.add("hidden");
+          enhanceBtn.disabled = false;
+          enhanceBtn.textContent = "✨ Enhance Image";
+          progressBar.style.width = "0%";
+        }, 1000);
+      });
+    });
+
+    // Enhanced drag and drop
+    const uploadZone = document.querySelector('.upload-zone');
+    
+    uploadZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    });
+    
+    uploadZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+    });
+    
+    uploadZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const imageInput = document.getElementById("image");
+        imageInput.files = files;
+        imageInput.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Utility functions
+    function b64toBlob(b64Data, contentType = "", sliceSize = 512) {
+      const byteCharacters = atob(b64Data);
+      const byteArrays = [];
+      for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+        const byteNumbers = Array.from(slice, (char) => char.charCodeAt(0));
+        byteArrays.push(new Uint8Array(byteNumbers));
+      }
+      return new Blob(byteArrays, { type: contentType });
+    }
+
+    function animateValue(id, start, end, duration) {
+      const element = document.getElementById(id);
+      const startTime = performance.now();
+      
+      function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = start + (end - start) * progress;
+        
+        element.textContent = current.toFixed(id.includes('ssim') || id.includes('mae') || id.includes('mse') ? 4 : 2);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    function drawMetricChart(psnr, ssim, mae, mse) {
+      const ctx = document.getElementById("comparisonChart").getContext("2d");
+      if (window.metricChartInstance) {
+        window.metricChartInstance.destroy();
+      }
+      
+      window.metricChartInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["PSNR", "SSIM", "MAE", "MSE"],
+          datasets: [{
+            data: [psnr, ssim * 100, mae * 100, mse * 100],
+            backgroundColor: ["#8b45ff", "#ff6b6b", "#4ecdc4", "#ffe66d"],
+            borderWidth: 0,
+            hoverBorderWidth: 3,
+            hoverBorderColor: "#fff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { 
+              position: "bottom", 
+              labels: { 
+                color: "#fff",
+                padding: 20,
+                usePointStyle: true
+              }
+            }
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true
+          }
+        }
+      });
+    }
+
+    function drawNoiseHistogram(hist, bins) {
+      const ctx = document.getElementById("noiseChart").getContext("2d");
+      if (window.noiseChartInstance) {
+        window.noiseChartInstance.destroy();
+      }
+      
+      const midpoints = bins.slice(0, -1).map((bin, i) => ((bin + bins[i + 1]) / 2).toFixed(3));
+      
+      window.noiseChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: midpoints,
+          datasets: [{
+            label: "Noise Pixel Count",
+            data: hist,
+            borderColor: "#8b45ff",
+            backgroundColor: "rgba(139, 69, 255, 0.1)",
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: "#8b45ff",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { 
+            legend: { 
+              labels: { color: "#fff" } 
+            } 
+          },
+          scales: {
+            x: { 
+              ticks: { color: "#fff" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            },
+            y: { 
+              ticks: { color: "#fff" },
+              grid: { color: "rgba(255,255,255,0.1)" }
+            }
+          },
+          animation: {
+            tension: {
+              duration: 1000,
+              easing: 'linear',
+              from: 1,
+              to: 0.4,
+              loop: true
+            }
+          }
+        }
+      }); 
+    }
+  </script>
+</body>
+</html>

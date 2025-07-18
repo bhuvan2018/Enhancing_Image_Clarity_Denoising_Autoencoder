@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Image Deblurring | Neural Enhancement</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daisyui@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.28/bundled/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lenis/1.0.42/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Space Grotesk', sans-serif; margin: 0; padding: 0; }
+    
+    .hero-3d {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 30%, #0f0f23 70%, #000 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .floating {
+      animation: float 8s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotateZ(0deg); }
+      50% { transform: translateY(-40px) rotateZ(2deg); }
+    }
+    
+    .glow-text {
+      text-shadow: 0 0 40px rgba(139,69,255,1), 0 0 80px rgba(139,69,255,.7), 0 0 120px rgba(139,69,255,.5);
+      filter: brightness(1.2);
+    }
+    
+    .neural-grid {
+      background-image: conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(139,69,255,.2) 90deg, transparent 180deg, rgba(78,205,196,.2) 270deg, transparent 360deg);
+      background-size: 100px 100px;
+      animation: gridRotate 30s linear infinite;
+      position: absolute;
+      inset: 0;
+      opacity: 0.3;
+    }
+    
+    @keyframes gridRotate {
+      0% { background-position: 0 0; }
+      100% { background-position: 100px 100px; }
+    }
+    
+    .glass {
+      backdrop-filter: blur(30px);
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      box-shadow: 0 12px 40px rgba(139,69,255,.2);
+      border-radius: 20px;
+    }
+    
+    .btn-glow {
+      background: linear-gradient(45deg, #8b45ff, #ff6b6b, #4ecdc4, #8b45ff);
+      background-size: 400% 400%;
+      animation: gradientShift 3s ease infinite;
+      padding: 4px;
+      border-radius: 60px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(139,69,255,.5);
+    }
+    
+    .btn-glow::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+      animation: shine 2.5s infinite;
+    }
+    
+    @keyframes shine {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .feature-card {
+      transition: all .5s cubic-bezier(.175,.885,.32,1.275);
+      border: 1px solid rgba(139,69,255,.4);
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,.03);
+    }
+    
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(139,69,255,.2), rgba(255,107,107,.2));
+      opacity: 0;
+      transition: all .5s;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-20px) scale(1.08);
+      box-shadow: 0 30px 60px rgba(139,69,255,.5);
+      border-color: rgba(139,69,255,.8);
+    }
+    
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+    
+    .stats-glow {
+      background: linear-gradient(45deg, rgba(139,69,255,.1), rgba(255,107,107,.1));
+      border-radius: 15px;
+      padding: 20px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(139,69,255,.3);
+    }
+    
+    #canvas3d {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .pulse {
+      animation: pulse 3s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .6; transform: scale(1.1); }
+    }
+    
+    .text-gradient {
+      background: linear-gradient(45deg, #8b45ff, #ff6b6b, #4ecdc4, #8b45ff);
+      background-size: 300% 300%;
+      animation: textGradient 6s ease infinite;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    @keyframes textGradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .emoji-float {
+      display: inline-block;
+      animation: emojiFloat 4s ease-in-out infinite;
+    }
+    
+    @keyframes emojiFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(10deg); }
+    }
+    
+    .stats-counter {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #8b45ff;
+    }
+    
+    .footer-glow {
+      background: linear-gradient(135deg, rgba(139,69,255,.1), rgba(255,107,107,.1), rgba(78,205,196,.1));
+    }
+    
+    .content-wrapper {
+      position: relative;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="bg-base-100 text-base-content">
+  <!-- Navbar -->
+  <div class="navbar glass fixed top-0 z-50 px-6">
+    <div class="navbar-start">
+      <a href="/" class="btn btn-ghost text-xl font-bold text-primary pulse">
+        🧠 NeuralVision
+      </a>
+    </div>
+    <div class="navbar-end">
+      <a href="/" class="btn btn-ghost hover:text-primary transition-colors">Home</a>
+      <a href="/in" class="btn btn-ghost hover:text-primary transition-colors">Deblur</a>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-3d">
+    <canvas id="canvas3d"></canvas>
+    <div class="neural-grid"></div>
+    
+    <div class="content-wrapper text-center">
+      <div class="max-w-5xl floating">
+        <h1 class="text-6xl md:text-8xl font-bold mb-6 glow-text">
+          <span class="text-gradient">
+            AI Image Enhancement
+          </span>
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          Transform blurry images into crystal-clear masterpieces using cutting-edge neural networks and advanced deep learning algorithms
+        </p>
+        
+        <div class="btn-glow inline-block mb-8">
+          <a href="/in" class="btn btn-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 rounded-full px-10 py-4 text-lg font-semibold">
+            Start Enhancement ✨
+          </a>
+        </div>
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-6 mt-12 max-w-2xl mx-auto">
+          <div class="text-center stats-glow">
+            <div class="stats-counter">99.5%</div>
+            <div class="text-sm text-gray-400">Accuracy</div>
+          </div>
+          <div class="text-center stats-glow">
+            <div class="stats-counter">2.3s</div>
+            <div class="text-sm text-gray-400">Processing</div>
+          </div>
+          <div class="text-center stats-glow">
+            <div class="stats-counter">50K+</div>
+            <div class="text-sm text-gray-400">Enhanced</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-20 bg-gradient-to-b from-base-100 to-base-200 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-purple-900/10 to-pink-900/10"></div>
+    <div class="container mx-auto px-6 relative z-10">
+      <h2 class="text-5xl font-bold text-center mb-4 text-primary">Powerful Features</h2>
+      <p class="text-center text-gray-400 mb-16 text-lg">Experience the future of image enhancement</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="feature-card card bg-base-100 shadow-2xl">
+          <div class="card-body items-center text-center p-8">
+            <div class="text-5xl mb-6 emoji-float">🚀</div>
+            <h3 class="card-title text-primary text-xl mb-4">Lightning Fast</h3>
+            <p class="text-gray-300">Process images in seconds with optimized neural networks powered by GPU acceleration</p>
+          </div>
+        </div>
+        
+        <div class="feature-card card bg-base-100 shadow-2xl">
+          <div class="card-body items-center text-center p-8">
+            <div class="text-5xl mb-6 emoji-float" style="animation-delay: 1s;">🎯</div>
+            <h3 class="card-title text-primary text-xl mb-4">Precision AI</h3>
+            <p class="text-gray-300">CBAM-enhanced U-Net with attention mechanisms for superior image quality</p>
+          </div>
+        </div>
+        
+        <div class="feature-card card bg-base-100 shadow-2xl">
+          <div class="card-body items-center text-center p-8">
+            <div class="text-5xl mb-6 emoji-float" style="animation-delay: 2s;">📊</div>
+            <h3 class="card-title text-primary text-xl mb-4">Real Metrics</h3>
+            <p class="text-gray-300">PSNR, SSIM, MAE analysis with comprehensive visual comparisons</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer footer-center p-8 footer-glow text-base-content">
+    <div>
+      <p class="font-semibold text-lg">© 2025 <span class="text-primary font-bold">Bhuvan Shetty</span> • AI Image Enhancement</p>
+      <p class="text-sm text-gray-400 mt-2">Revolutionizing image processing with artificial intelligence</p>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Three.js after DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Lenis smooth scrolling
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+      });
+      
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // Three.js Scene Setup
+      const canvas = document.getElementById('canvas3d');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000000, 0);
+
+      // Morphing Torus
+      const torusGeometry = new THREE.TorusGeometry(80, 25, 16, 100);
+      const torusMaterial = new THREE.MeshBasicMaterial({
+        color: 0x8b45ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+      const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+      scene.add(torus);
+
+      // Energy Wave Spheres
+      const spheres = [];
+      const colors = [0x8b45ff, 0xff6b6b, 0x4ecdc4];
+      for (let i = 0; i < 12; i++) {
+        const sphereGeometry = new THREE.SphereGeometry(15, 32, 32);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
+          color: colors[i % 3],
+          transparent: true,
+          opacity: 0.7,
+          wireframe: true
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(
+          Math.cos(i * Math.PI / 6) * 150,
+          Math.sin(i * Math.PI / 6) * 150,
+          Math.sin(i * Math.PI / 12) * 80
+        );
+        spheres.push(sphere);
+        scene.add(sphere);
+      }
+
+      // Floating Geometric Shapes
+      const shapes = [];
+      const geometries = [
+        new THREE.OctahedronGeometry(12),
+        new THREE.TetrahedronGeometry(12),
+        new THREE.BoxGeometry(15, 15, 15)
+      ];
+      
+      for (let i = 0; i < 15; i++) {
+        const shapeMaterial = new THREE.MeshBasicMaterial({
+          color: 0x8b45ff,
+          transparent: true,
+          opacity: 0.4,
+          wireframe: true
+        });
+        const shape = new THREE.Mesh(geometries[i % 3], shapeMaterial);
+        shape.position.set(
+          (Math.random() - 0.5) * 800,
+          (Math.random() - 0.5) * 500,
+          (Math.random() - 0.5) * 300
+        );
+        shapes.push(shape);
+        scene.add(shape);
+      }
+
+      // Neural Network Visualization
+      const networkNodes = [];
+      const networkConnections = [];
+      
+      for (let i = 0; i < 25; i++) {
+        const nodeGeometry = new THREE.SphereGeometry(2, 8, 8);
+        const nodeMaterial = new THREE.MeshBasicMaterial({
+          color: 0x4ecdc4,
+          transparent: true,
+          opacity: 0.9
+        });
+        const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+        node.position.set(
+          (Math.random() - 0.5) * 600,
+          (Math.random() - 0.5) * 300,
+          (Math.random() - 0.5) * 200
+        );
+        networkNodes.push(node);
+        scene.add(node);
+      }
+
+      // Create connections between nearby nodes
+      for (let i = 0; i < networkNodes.length; i++) {
+        for (let j = i + 1; j < networkNodes.length; j++) {
+          const distance = networkNodes[i].position.distanceTo(networkNodes[j].position);
+          if (distance < 120) {
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+              networkNodes[i].position,
+              networkNodes[j].position
+            ]);
+            const material = new THREE.LineBasicMaterial({
+              color: 0xff6b6b,
+              transparent: true,
+              opacity: 0.4
+            });
+            const line = new THREE.Line(geometry, material);
+            networkConnections.push(line);
+            scene.add(line);
+          }
+        }
+      }
+
+      // Particle System
+      const particleGeometry = new THREE.BufferGeometry();
+      const particleCount = 800;
+      const positions = new Float32Array(particleCount * 3);
+      const velocities = [];
+      
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 1200;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 600;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+        
+        velocities.push(
+          (Math.random() - 0.5) * 0.8,
+          (Math.random() - 0.5) * 0.8,
+          (Math.random() - 0.5) * 0.8
+        );
+      }
+      
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const particleMaterial = new THREE.PointsMaterial({
+        color: 0x8b45ff,
+        size: 1.5,
+        transparent: true,
+        opacity: 0.8
+      });
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      scene.add(particles);
+
+      // Camera positioning
+      camera.position.set(0, 0, 400);
+      let time = 0;
+      let mouseX = 0;
+      let mouseY = 0;
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        time += 0.01;
+        
+        // Morphing torus
+        torus.rotation.x += 0.005;
+        torus.rotation.y += 0.01;
+        torus.scale.set(
+          1 + Math.sin(time * 2) * 0.2,
+          1 + Math.cos(time * 1.5) * 0.2,
+          1 + Math.sin(time * 2.5) * 0.15
+        );
+        
+        // Energy wave spheres
+        spheres.forEach((sphere, i) => {
+          const radius = 150 + Math.sin(time + i * 0.5) * 40;
+          sphere.position.x = Math.cos(time * 0.8 + i * Math.PI / 6) * radius;
+          sphere.position.y = Math.sin(time * 0.8 + i * Math.PI / 6) * radius;
+          sphere.position.z = Math.sin(time * 1.5 + i * 0.3) * 80;
+          sphere.rotation.x += 0.008;
+          sphere.rotation.y += 0.012;
+          sphere.scale.setScalar(1 + Math.sin(time * 3 + i * 0.5) * 0.3);
+        });
+        
+        // Floating shapes
+        shapes.forEach((shape, i) => {
+          shape.rotation.x += 0.008 + i * 0.001;
+          shape.rotation.y += 0.012 + i * 0.001;
+          shape.position.y += Math.sin(time * 0.5 + i * 0.3) * 0.6;
+          shape.position.x += Math.cos(time * 0.3 + i * 0.2) * 0.4;
+        });
+        
+        // Neural network pulsing
+        networkNodes.forEach((node, i) => {
+          node.scale.setScalar(1 + Math.sin(time * 4 + i * 0.3) * 0.4);
+          node.material.opacity = 0.6 + Math.sin(time * 3 + i * 0.2) * 0.3;
+        });
+        
+        // Connection pulsing
+        networkConnections.forEach((connection, i) => {
+          connection.material.opacity = 0.2 + Math.sin(time * 5 + i * 0.4) * 0.3;
+        });
+        
+        // Animate particles
+        const positionAttribute = particles.geometry.attributes.position;
+        for (let i = 0; i < particleCount; i++) {
+          positionAttribute.array[i * 3] += velocities[i * 3];
+          positionAttribute.array[i * 3 + 1] += velocities[i * 3 + 1];
+          positionAttribute.array[i * 3 + 2] += velocities[i * 3 + 2];
+          
+          // Boundary check and bounce
+          if (Math.abs(positionAttribute.array[i * 3]) > 600) velocities[i * 3] *= -1;
+          if (Math.abs(positionAttribute.array[i * 3 + 1]) > 300) velocities[i * 3 + 1] *= -1;
+          if (Math.abs(positionAttribute.array[i * 3 + 2]) > 200) velocities[i * 3 + 2] *= -1;
+        }
+        positionAttribute.needsUpdate = true;
+        
+        // Dynamic camera movement
+        camera.position.x += (mouseX * 80 - camera.position.x) * 0.05;
+        camera.position.y += (mouseY * 60 - camera.position.y) * 0.05;
+        camera.position.z = 400 + Math.sin(time * 0.2) * 50;
+        camera.lookAt(0, 0, 0);
+        
+        renderer.render(scene, camera);
+      }
+      
+      animate();
+
+      // Mouse interaction
+      document.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        
+        // Interactive torus warping
+        torus.rotation.x += mouseY * 0.01;
+        torus.rotation.y += mouseX * 0.01;
+        
+        // Sphere attraction to cursor
+        spheres.forEach((sphere, i) => {
+          const factor = (i % 2 === 0 ? 1 : -1) * 8;
+          sphere.position.x += mouseX * factor;
+          sphere.position.y += mouseY * factor;
+        });
+      });
+
+      // Responsive handling
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    });
+  </script>
+</body>
+</html>
