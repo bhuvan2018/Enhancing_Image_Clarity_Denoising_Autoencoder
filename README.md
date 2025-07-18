@@ -1,5 +1,3 @@
-Here's a professional and complete `README.md` file tailored for your **Face Image Deblurring Web App using Flask and TensorFlow** (with CBAM U-Net and PSNR/SSIM/MAE/MSE metrics, histogram, CSV logging, and enhancement pipeline):
-
 ---
 
 ````markdown
