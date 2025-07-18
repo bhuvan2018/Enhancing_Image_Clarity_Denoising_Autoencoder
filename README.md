@@ -1,6 +1,3 @@
----
-
-````markdown
 # Face Deblurring Web App 🚀
 
 A deep learning-based web application for deblurring low-quality face images using a CBAM-enhanced U-Net architecture. The app performs image restoration, applies quality enhancement (CLAHE, denoising, unsharp masking), and computes evaluation metrics such as PSNR, SSIM, MAE, and MSE.
