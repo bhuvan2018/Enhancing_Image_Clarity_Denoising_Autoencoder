@@ -19,7 +19,7 @@ A deep learning-based web application for deblurring low-quality face images usi
   - MAE and MSE
   - Noise difference histogram (intensity loss vs. enhancement)
 - ✅ CSV log export of metrics for uploaded images
-- ✅ Web-Based UI (Three.js)
+- ✅ Web-Based UI (Three.js, Daisy UI, Lenis UI)
 - ✅ Clear separation of routes for `/` (landing) and `/in` (deblurring)
 
 ---
