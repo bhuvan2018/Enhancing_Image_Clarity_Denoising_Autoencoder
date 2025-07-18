@@ -47,13 +47,6 @@ cd face-deblurring-app
 
 ```bash
 pip install -r requirements.txt
-```
-
-Or, manually install essential packages:
-
-```bash
-pip install flask keras tensorflow pillow scikit-image opencv-python pandas scikit-learn
-```
 
 ### 3. Folder Structure
 
@@ -93,13 +86,13 @@ Navigate to:
 
 ## 📦 Deployment
 
-You can deploy it to any Flask-compatible host (Render, Heroku, Vercel via backend proxy, etc.)
+SOON.....
 
 ---
 
 ## 📁 Dataset & Training
 
-* **Dataset:** FFHQ / Human Faces
+* **Dataset:** celeba faces
 * **Augmentation:** Gaussian + Motion blur
 * **Training:** Custom CBAM-U-Net + Multi-scale loss (Perceptual + Pixel)
 
@@ -108,26 +101,6 @@ You can deploy it to any Flask-compatible host (Render, Heroku, Vercel via backe
 ## ✍️ Author
 
 **Bhuvan Shetty**
-📧 \[email/contact here]
-📌 Built with ❤️ using TensorFlow, Flask, OpenCV, and modern UI
-
+📧 \[bhuvanshetty2018@gmail.com]
+📌 Built with ❤️ using Three.js, Daisy, Lenis, TensorFlow, Flask
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License. Feel free to use, modify, and distribute with attribution.
-
-```
-
----
-
-Let me know if you want:
-
-- Project logo or screenshots in README  
-- Live demo link  
-- GitHub repo description and tags  
-- License file  
-- Model architecture visual diagram  
-
-I can generate them all!
-```
