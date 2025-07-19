@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
+from app import app
 from keras.layers import TFSMLayer
 from PIL import Image, ImageEnhance, ImageFilter
 import numpy as np
@@ -169,4 +170,4 @@ def download_csv():
         return jsonify({"error": "CSV log not found"}), 404
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run()
