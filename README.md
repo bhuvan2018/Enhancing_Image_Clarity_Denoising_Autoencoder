@@ -141,7 +141,3 @@ Open in browser:
 **Bhuvan Shetty**
 📧 \[[bhuvanshetty2018@gmail.com](mailto:bhuvanshetty2018@gmail.com)]
 Built with ❤️ using Flask, TensorFlow, Three.js, DaisyUI & Lenis
-
----
-
-```
