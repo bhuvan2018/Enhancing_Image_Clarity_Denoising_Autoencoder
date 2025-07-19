@@ -1,8 +1,3 @@
-Here’s a **cleaned, improved, and professional version** of your `README.md` with better structure, formatting, and clarity, while keeping your original essence intact:
-
----
-
-````markdown
 # Face Deblurring Web App 🚀
 
 A deep learning-powered web application to **restore low-quality or blurred face images** using a **CBAM-enhanced U-Net** architecture. The system performs intelligent image enhancement through CLAHE, denoising, and unsharp masking — and provides detailed evaluation metrics including PSNR, SSIM, MAE, and MSE.
