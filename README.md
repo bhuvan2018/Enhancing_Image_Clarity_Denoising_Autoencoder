@@ -66,6 +66,8 @@ pip install -r requirements.txt
 
 ### 4. Run Locally
 
+#### Option A: Run Locally
+
 ```bash
 python app.py
 ```
@@ -75,7 +77,26 @@ Open in browser:
 * `http://127.0.0.1:5000/` → Home
 * `http://127.0.0.1:5000/in` → Deblurring UI
 
+#### Option B: Run with Docker
+1. Build the Docker Image:
+
+```bash
+docker build -t face-deblurring-app .
+```
+
+2. Run the Container
+
+```bash
+docker run -d -p 5000:5000 face-deblurring-app
+```
+Open in browser:
+
+* `http://localhost:5000/` → Home
+* `http://localhost:5000/in` → Deblurring UI
+
 ---
+
+
 
 ## 📊 Sample Output Metrics
 
@@ -89,7 +110,7 @@ Open in browser:
 
 ## 📦 Deployment
 
-> ⚙️ Deployment instructions via **Render / Docker / Gunicorn** coming soon...
+> ⚙️ Deployment via **Docker**
 
 ---
 
