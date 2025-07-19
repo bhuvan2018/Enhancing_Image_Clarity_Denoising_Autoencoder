@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from app import app
 from keras.layers import TFSMLayer
 from PIL import Image, ImageEnhance, ImageFilter
 import numpy as np
