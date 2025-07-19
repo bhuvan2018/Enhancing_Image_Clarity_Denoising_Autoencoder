@@ -56,10 +56,20 @@ pip install -r requirements.txt
 ```
 ├── app.py                     # Flask backend
 ├── autoencoder_model/         # Trained TensorFlow SavedModel
+├── nginx/
+│   ├── default.conf
 ├── templates/
 │   ├── home.html              # Landing page
 │   └── index.html             # Deblurring interface
-├── static/uploads/            # Uploaded images
+├── static/
+│   ├── css/
+│     ├── styles.css
+│   ├── js/
+│     ├── script.js
+├── docker-compose.yml
+├── Dockerfile
+├── render.yaml
+├── requirements.txt          
 ├── metrics_log.csv            # Metrics log for processed images
 └── README.md
 ```
