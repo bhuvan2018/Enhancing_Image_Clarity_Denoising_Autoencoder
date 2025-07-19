@@ -1,36 +1,43 @@
-# Face Deblurring Web App 🚀
-
-A deep learning-based web application for deblurring low-quality face images using a CBAM-enhanced U-Net architecture. The app performs image restoration, applies quality enhancement (CLAHE, denoising, unsharp masking), and computes evaluation metrics such as PSNR, SSIM, MAE, and MSE.
+Here’s a **cleaned, improved, and professional version** of your `README.md` with better structure, formatting, and clarity, while keeping your original essence intact:
 
 ---
 
-## 🔧 Features
+````markdown
+# Face Deblurring Web App 🚀
 
-- ✅ Upload blurred face images (selfies or low-light images)
-- ✅ Preprocessing pipeline with:
+A deep learning-powered web application to **restore low-quality or blurred face images** using a **CBAM-enhanced U-Net** architecture. The system performs intelligent image enhancement through CLAHE, denoising, and unsharp masking — and provides detailed evaluation metrics including PSNR, SSIM, MAE, and MSE.
+
+---
+
+## 🔍 Key Features
+
+- 📤 Upload blurry face images (e.g., selfies, low-light portraits)
+- 🧪 Preprocessing pipeline with:
   - CLAHE (Contrast Limited Adaptive Histogram Equalization)
-  - Mild denoising (FastNlMeansDenoisingColored)
+  - FastNlMeansDenoisingColored (light denoising)
   - Unsharp masking
-  - Adaptive contrast and sharpness tuning
-- ✅ Real-time deblurring using a TensorFlow SavedModel (`TFSMLayer`)
-- ✅ Visualization of:
+  - Adaptive sharpness & contrast adjustment
+- 🧠 Real-time deblurring with **TensorFlow SavedModel** via `TFSMLayer`
+- 📊 Metrics Visualization:
   - PSNR (Peak Signal-to-Noise Ratio)
   - SSIM (Structural Similarity Index)
-  - MAE and MSE
-  - Noise difference histogram (intensity loss vs. enhancement)
-- ✅ CSV log export of metrics for uploaded images
-- ✅ Web-Based UI (Three.js, Daisy UI, Lenis UI)
-- ✅ Clear separation of routes for `/` (landing) and `/in` (deblurring)
+  - MAE, MSE
+  - Noise Difference Histogram (Intensity Loss vs. Enhancement)
+- 📥 CSV log export of image metrics
+- 🌐 Web UI with:
+  - Landing page (`/`)
+  - Deblurring interface (`/in`)
+- 💻 Frontend stack: **Three.js**, **Daisy UI**, **Lenis UI**
 
 ---
 
 ## 🧠 Model Overview
 
 - **Architecture:** U-Net with CBAM (Convolutional Block Attention Module)
-- **Loss Function:** Perceptual + Pixel Loss
-- **Trained On:** Human face datasets (with synthetic blur)
-- **Resolution:** 128×128 input/output
-- **Inference Layer:** `TFSMLayer` from Keras (`autoencoder_model/`)
+- **Loss Function:** Perceptual + Pixel Loss (Multi-Scale)
+- **Input/Output Size:** 128 × 128
+- **Trained On:** Human face datasets with synthetic blur (Gaussian + Motion)
+- **Deployment Format:** TensorFlow SavedModel (`autoencoder_model/`)
 
 ---
 
@@ -43,38 +50,39 @@ git clone https://github.com/bhuvan2018/Enhancing_Image_Clarity_Denoising_Autoen
 cd Enhancing_Image_Clarity_Denoising_Autoencoder
 ````
 
-### 2. Install Requirements
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
+```
 
-### 3. Folder Structure
+### 3. Project Structure
 
 ```
-├── app.py
-├── autoencoder_model/         # Trained SavedModel (TensorFlow)
+├── app.py                     # Flask backend
+├── autoencoder_model/         # Trained TensorFlow SavedModel
 ├── templates/
 │   ├── home.html              # Landing page
-│   └── index.html             # Upload & deblur interface
-├── static/uploads/           # Uploaded images
-├── metrics_log.csv           # Log of processed images and metrics
+│   └── index.html             # Deblurring interface
+├── static/uploads/            # Uploaded images
+├── metrics_log.csv            # Metrics log for processed images
 └── README.md
 ```
 
-### 4. Run the App
+### 4. Run Locally
 
 ```bash
 python app.py
 ```
 
-Navigate to:
+Open in browser:
 
 * `http://127.0.0.1:5000/` → Home
-* `http://127.0.0.1:5000/in` → Deblurring Interface
+* `http://127.0.0.1:5000/in` → Deblurring UI
 
 ---
 
-## 📊 Sample Metrics (on output images)
+## 📊 Sample Output Metrics
 
 | Image        | PSNR (dB) | SSIM | MAE   | MSE    |
 | ------------ | --------- | ---- | ----- | ------ |
@@ -86,21 +94,28 @@ Navigate to:
 
 ## 📦 Deployment
 
-SOON.....
+> ⚙️ Deployment instructions via **Render / Docker / Gunicorn** coming soon...
 
 ---
 
-## 📁 Dataset & Training
+## 📁 Dataset & Training Details
 
-* **Dataset:** celeba faces
-* **Augmentation:** Gaussian + Motion blur
-* **Training:** Custom CBAM-U-Net + Multi-scale loss (Perceptual + Pixel)
+* **Dataset Used:** CelebA Faces + Human Faces Dataset
+* **Blur Types:** Randomized Gaussian and Motion Blur (synthetically added)
+* **Training Pipeline:**
+
+  * CBAM-enhanced U-Net
+  * Perceptual + Pixel loss (multi-scale)
+  * Trained using 128×128 face crops
 
 ---
 
-## ✍️ Author
+## 🙋‍♂️ Author
 
 **Bhuvan Shetty**
-📧 \[bhuvanshetty2018@gmail.com]
-📌 Built with ❤️ using Three.js, Daisy, Lenis, TensorFlow, Flask
+📧 \[[bhuvanshetty2018@gmail.com](mailto:bhuvanshetty2018@gmail.com)]
+Built with ❤️ using Flask, TensorFlow, Three.js, DaisyUI & Lenis
+
 ---
+
+```
