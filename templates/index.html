@@ -3,43 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeuralVision | AI Image Enhancement</title>
+  <title>AI Image Deblurring | Neural Enhancement</title>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.28/bundled/lenis.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lenis/1.0.42/lenis.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
     *{font-family:'Space Grotesk',sans-serif;}
     
-    :root {
-      --primary: #8b45ff;
-      --secondary: #ff6b6b;
-      --accent: #4ecdc4;
-      --glass: rgba(255,255,255,0.08);
-    }
-    
-    .glass{
-      backdrop-filter:blur(20px);
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,.15);
-      box-shadow:0 8px 32px rgba(0,0,0,.3);
-    }
-    
+    .glass{backdrop-filter:blur(20px);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.3);}
     .glow{box-shadow:0 0 40px rgba(139,69,255,.6),0 0 80px rgba(139,69,255,.3);}
     
     .upload-zone{
       border:2px dashed rgba(139,69,255,.4);
       transition:all .4s cubic-bezier(.25,.46,.45,.94);
-      position:relative;overflow:hidden;cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      cursor:pointer;
       background:radial-gradient(circle at 50% 50%,rgba(139,69,255,.05) 0%,transparent 70%);
     }
     .upload-zone:hover{
-      border-color:var(--primary);
+      border-color:rgba(139,69,255,1);
       background:radial-gradient(circle at 50% 50%,rgba(139,69,255,.15) 0%,transparent 70%);
       transform:scale(1.02);
     }
     .upload-zone.drag-over{
-      border-color:var(--secondary);
+      border-color:rgba(255,107,107,1);
       background:radial-gradient(circle at 50% 50%,rgba(255,107,107,.15) 0%,transparent 70%);
       transform:scale(1.05);
     }
@@ -54,14 +46,11 @@
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     @keyframes float{0%,100%{transform:translateY(0px);}50%{transform:translateY(-10px);}}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
-    @keyframes gradientShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
-    @keyframes shine{0%{left:-100%;}100%{left:100%;}}
-    @keyframes slideIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
     
     .result-card{
       transform:perspective(1000px) rotateY(0deg);
       transition:all .6s cubic-bezier(.25,.46,.45,.94);
-      animation:slideIn 0.6s ease-out;
     }
     .result-card:hover{
       transform:perspective(1000px) rotateY(3deg) translateZ(30px);
@@ -71,8 +60,10 @@
     .metric-badge{
       background:linear-gradient(135deg,rgba(139,69,255,.25),rgba(255,107,107,.25));
       border:1px solid rgba(139,69,255,.4);
-      backdrop-filter:blur(15px);transition:all .3s ease;
-      position:relative;overflow:hidden;
+      backdrop-filter:blur(15px);
+      transition:all .3s ease;
+      position:relative;
+      overflow:hidden;
     }
     .metric-badge::before{
       content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
@@ -84,8 +75,11 @@
     
     .btn-glow{
       background:linear-gradient(45deg,#8b45ff,#ff6b6b,#4ecdc4);
-      background-size:300% 300%;animation:gradientShift 3s ease infinite;
-      position:relative;overflow:hidden;border:none;
+      background-size:300% 300%;
+      animation:gradientShift 3s ease infinite;
+      position:relative;
+      overflow:hidden;
+      border:none;
       box-shadow:0 4px 15px rgba(139,69,255,.4);
     }
     .btn-glow::before{
@@ -95,11 +89,15 @@
     }
     .btn-glow:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(139,69,255,.6);}
     
+    @keyframes gradientShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    @keyframes shine{0%{left:-100%;}100%{left:100%;}}
+    
     .image-container{
       position:relative;width:100%;min-height:220px;
       background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
       border-radius:12px;display:flex;align-items:center;justify-content:center;
-      border:1px solid rgba(255,255,255,.1);transition:all .3s ease;
+      border:1px solid rgba(255,255,255,.1);
+      transition:all .3s ease;
     }
     .image-container:hover{box-shadow:0 8px 30px rgba(139,69,255,.2);}
     .image-container img{max-width:100%;max-height:300px;object-fit:contain;border-radius:8px;}
@@ -109,7 +107,8 @@
     .loading-spinner{
       width:50px;height:50px;
       border:4px solid rgba(139,69,255,.2);
-      border-top:4px solid #8b45ff;border-radius:50%;
+      border-top:4px solid #8b45ff;
+      border-radius:50%;
       animation:spin 1s linear infinite;
     }
     
@@ -127,95 +126,61 @@
     .floating-icon{animation:float 3s ease-in-out infinite;}
     
     .navbar{
-      background:rgba(0,0,0,.3);backdrop-filter:blur(20px);
+      background:rgba(0,0,0,.3);
+      backdrop-filter:blur(20px);
       border-bottom:1px solid rgba(255,255,255,.1);
     }
     
     .stats-grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;
-    }
-    
-    .comparison-container{
-      position:relative;width:100%;height:300px;
-      border-radius:12px;overflow:hidden;cursor:ew-resize;
-      background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.1);
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+      gap:1rem;
     }
     
     .comparison-slider{
-      position:relative;width:100%;height:100%;overflow:hidden;
+      position:relative;
+      overflow:hidden;
+      border-radius:12px;
+      height:300px;
     }
-    
-    .comparison-slider .image-before,
-    .comparison-slider .image-after{
-      position:absolute;top:0;left:0;width:100%;height:100%;
+    .comparison-slider img{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
       object-fit:cover;
     }
-    
-    .comparison-slider .image-after{
-      clip-path:polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%);
-      transition:clip-path 0.1s ease;
+    .comparison-slider .overlay{
+      position:absolute;
+      top:0;
+      right:0;
+      width:50%;
+      height:100%;
+      overflow:hidden;
     }
-    
     .comparison-slider .slider-handle{
-      position:absolute;top:0;left:50%;transform:translateX(-50%);
-      width:4px;height:100%;background:var(--primary);
-      cursor:ew-resize;z-index:10;
-      box-shadow:0 0 20px rgba(139,69,255,.5);
-    }
-    
-    .comparison-slider .slider-handle::before{
-      content:'⟷';position:absolute;top:50%;left:50%;
+      position:absolute;
+      top:50%;
+      left:50%;
       transform:translate(-50%,-50%);
-      width:30px;height:30px;background:var(--primary);
-      border-radius:50%;display:flex;align-items:center;justify-content:center;
-      color:white;font-size:14px;font-weight:bold;
-      box-shadow:0 4px 15px rgba(139,69,255,.4);
+      width:4px;
+      height:100%;
+      background:#8b45ff;
+      cursor:ew-resize;
+      z-index:10;
     }
-    
-    .feature-card{
-      background:linear-gradient(135deg,rgba(139,69,255,.1),rgba(255,107,107,.05));
-      border:1px solid rgba(139,69,255,.3);backdrop-filter:blur(10px);
-      border-radius:16px;padding:1.5rem;transition:all .3s ease;
-      position:relative;overflow:hidden;
-    }
-    
-    .feature-card::before{
-      content:'';position:absolute;top:0;left:0;right:0;bottom:0;
-      background:linear-gradient(45deg,transparent,rgba(255,255,255,.05),transparent);
-      transform:translateX(-100%);transition:transform .5s;
-    }
-    
-    .feature-card:hover::before{transform:translateX(100%);}
-    .feature-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(139,69,255,.2);}
-    
-    .quality-indicator{
-      display:inline-flex;align-items:center;gap:0.5rem;
-      padding:0.5rem 1rem;border-radius:20px;font-size:0.875rem;
-      font-weight:600;text-transform:uppercase;letter-spacing:0.05em;
-    }
-    
-    .quality-excellent{background:rgba(76,175,80,.2);color:#4caf50;border:1px solid rgba(76,175,80,.4);}
-    .quality-good{background:rgba(255,193,7,.2);color:#ffc107;border:1px solid rgba(255,193,7,.4);}
-    .quality-fair{background:rgba(255,152,0,.2);color:#ff9800;border:1px solid rgba(255,152,0,.4);}
-    .quality-poor{background:rgba(244,67,54,.2);color:#f44336;border:1px solid rgba(244,67,54,.4);}
-    
-    .toast{
-      position:fixed;bottom:2rem;right:2rem;z-index:1000;
-      background:var(--glass);backdrop-filter:blur(20px);
-      border:1px solid rgba(255,255,255,.2);border-radius:12px;
-      padding:1rem 1.5rem;color:white;font-weight:500;
-      transform:translateX(100%);opacity:0;
-      transition:all .3s cubic-bezier(.25,.46,.45,.94);
-    }
-    
-    .toast.show{transform:translateX(0);opacity:1;}
-    
-    .processing-overlay{
-      position:absolute;top:0;left:0;right:0;bottom:0;
-      background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      border-radius:12px;z-index:20;
+    .comparison-slider .slider-handle::before{
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:20px;
+      height:20px;
+      background:#8b45ff;
+      border-radius:50%;
+      box-shadow:0 0 20px rgba(139,69,255,.5);
     }
   </style>
 </head>
@@ -229,53 +194,48 @@
         <span class="floating-icon">🧠</span> NeuralVision
       </a>
     </div>
-    <div class="navbar-end space-x-2">
-      <button id="darkModeToggle" class="btn btn-ghost btn-circle">🌓</button>
-      <button id="fullscreenBtn" class="btn btn-ghost btn-circle">⛶</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('info_modal').showModal()">ℹ️</button>
+    <div class="navbar-end">
+      <a href="/" class="btn btn-ghost">Home</a>
+      <a href="/in" class="btn btn-ghost">Deblur</a>
+      <button class="btn btn-ghost" onclick="document.getElementById('info_modal').showModal()">
+        ℹ️ Info
+      </button>
     </div>
   </div>
 
   <!-- Main Content -->
   <div class="container mx-auto px-6 pt-24 pb-12">
-    <!-- Header -->
     <div class="text-center mb-12">
       <h1 class="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">
         AI Image Enhancement
       </h1>
-      <p class="text-xl text-gray-300 mb-6">Transform blurry images with cutting-edge neural networks</p>
-      <div class="flex flex-wrap justify-center gap-3">
+      <p class="text-xl text-gray-300 mb-6">Upload your blurry image and watch the magic happen</p>
+      <div class="flex justify-center space-x-4">
+        <div class="badge badge-outline badge-lg">Neural Network</div>
         <div class="badge badge-outline badge-lg">CBAM-U-Net</div>
-        <div class="badge badge-outline badge-lg">Real-time Processing</div>
-        <div class="badge badge-outline badge-lg">Advanced Metrics</div>
-        <div class="badge badge-outline badge-lg">Neural Enhancement</div>
+        <div class="badge badge-outline badge-lg">Real-time</div>
       </div>
     </div>
 
     <!-- Upload Section -->
-    <div class="card glass w-full max-w-4xl mx-auto mb-8">
+    <div class="card glass w-full max-w-3xl mx-auto mb-8">
       <div class="card-body">
         <form id="upload-form" enctype="multipart/form-data">
           <div class="upload-zone rounded-xl p-16 text-center relative" onclick="document.getElementById('image').click()">
             <div class="relative z-10">
               <div class="text-7xl mb-6 floating-icon">📸</div>
-              <h3 class="text-2xl font-semibold mb-3 text-primary">Drop your blurry image here</h3>
-              <p class="text-gray-300 mb-6">Supports JPG, PNG, WebP • Max 10MB</p>
+              <h3 class="text-2xl font-semibold mb-3 text-primary">Drop your image here</h3>
+              <p class="text-gray-300 mb-6">Or click to select from your device</p>
               <input type="file" id="image" name="image" accept="image/*" required class="hidden"/>
-              <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('image').click()">
-                  📁 Choose File
-                </button>
-                <button type="button" id="pasteBtn" class="btn btn-outline btn-lg">
-                  📋 Paste from Clipboard
-                </button>
-              </div>
+              <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('image').click()">
+                Choose File
+              </button>
             </div>
           </div>
           
           <div class="text-center mt-8">
             <button type="submit" class="btn-glow btn btn-lg text-white border-0 px-12 py-4" id="enhanceBtn">
-              ✨ Enhance with AI
+              ✨ Enhance Image
             </button>
           </div>
         </form>
@@ -283,69 +243,54 @@
         <!-- Loading -->
         <div id="loading" class="text-center mt-8 hidden">
           <div class="loading-spinner mx-auto mb-4"></div>
-          <p class="text-primary text-lg pulse" id="loadingText">Processing with AI...</p>
+          <p class="text-primary text-lg pulse">Processing with AI...</p>
           <div class="w-64 bg-gray-700 rounded-full h-2 mx-auto mt-4">
             <div class="progress-bar w-0" id="progressBar"></div>
           </div>
-          <p class="text-sm text-gray-400 mt-2" id="progressText">Initializing...</p>
         </div>
       </div>
     </div>
 
     <!-- Results Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Enhanced Comparison View -->
+      <!-- Image Results -->
       <div class="result-card card glass">
         <div class="card-body">
           <h2 class="card-title text-primary mb-6 text-2xl">
-            <span class="floating-icon">🔍</span> Before vs After
+            <span class="floating-icon">📊</span> Results
           </h2>
-          
-          <!-- Single Image Preview (Before Enhancement) -->
-          <div id="singlePreview" class="text-center mb-4">
-            <div class="image-container">
-              <img id="inputPreview" class="hidden glow" alt="Original Image"/>
-              <div id="originalPlaceholder" class="placeholder">
-                <div class="text-4xl mb-2">🖼️</div>
-                Your original image will appear here
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="text-center">
+              <h4 class="text-lg font-semibold mb-3 text-gray-200">Original</h4>
+              <div class="image-container">
+                <img id="inputPreview" class="hidden glow" alt="Original Image"/>
+                <div id="originalPlaceholder" class="placeholder">
+                  <div class="text-4xl mb-2">🖼️</div>
+                  Original image will appear here
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- Comparison Slider (After Enhancement) -->
-          <div id="comparisonView" class="hidden">
-            <div class="comparison-container">
-              <div class="comparison-slider" id="comparisonSlider">
-                <img id="beforeImage" class="image-before" alt="Before"/>
-                <img id="afterImage" class="image-after" alt="After"/>
-                <div class="slider-handle" id="sliderHandle"></div>
-              </div>
-            </div>
-            <div class="flex justify-between mt-4 text-sm text-gray-400">
-              <span>← Original</span>
-              <span>Enhanced →</span>
-            </div>
-          </div>
-
-          <!-- Quality Assessment -->
-          <div id="qualityAssessment" class="mt-6 hidden">
-            <div class="flex items-center justify-between">
-              <span class="text-lg font-semibold">Quality Assessment:</span>
-              <div id="qualityIndicator" class="quality-indicator quality-excellent">
-                <span>🎯</span> Excellent
+            <div class="text-center">
+              <h4 class="text-lg font-semibold mb-3 text-gray-200">Enhanced</h4>
+              <div class="image-container">
+                <img id="output-img" class="hidden glow" alt="Enhanced Image"/>
+                <div id="enhancedPlaceholder" class="placeholder">
+                  <div class="text-4xl mb-2">✨</div>
+                  Enhanced image will appear here
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Enhanced Metrics -->
+      <!-- Metrics -->
       <div class="result-card card glass">
         <div class="card-body">
           <h2 class="card-title text-primary mb-6 text-2xl">
-            <span class="floating-icon">📊</span> Quality Metrics
+            <span class="floating-icon">📈</span> Quality Metrics
           </h2>
-          <div class="stats-grid mb-6">
+          <div class="stats-grid">
             <div class="metric-badge rounded-xl p-4 text-center">
               <div class="text-3xl font-bold text-primary" id="psnr-value">--</div>
               <div class="text-sm text-gray-300">PSNR (dB)</div>
@@ -363,18 +308,6 @@
               <div class="text-sm text-gray-300">MSE</div>
             </div>
           </div>
-
-          <!-- Processing Time & Model Info -->
-          <div class="feature-card">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-sm text-gray-300">Processing Time:</span>
-              <span class="font-bold text-accent" id="processingTime">-- ms</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-300">Model:</span>
-              <span class="font-bold text-primary">CBAM-U-Net</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -383,7 +316,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
       <div id="chart-container" class="card glass hidden">
         <div class="card-body">
-          <h3 class="card-title text-primary text-xl mb-4">📈 Performance Analysis</h3>
+          <h3 class="card-title text-primary text-xl mb-4">📊 Metric Analysis</h3>
           <div style="position: relative; height: 300px; width: 100%;">
             <canvas id="comparisonChart"></canvas>
           </div>
@@ -391,7 +324,7 @@
       </div>
       <div id="noise-chart-container" class="card glass hidden">
         <div class="card-body">
-          <h3 class="card-title text-primary text-xl mb-4">🔬 Noise Distribution</h3>
+          <h3 class="card-title text-primary text-xl mb-4">🔍 Noise Distribution</h3>
           <div style="position: relative; height: 300px; width: 100%;">
             <canvas id="noiseChart"></canvas>
           </div>
@@ -400,110 +333,92 @@
     </div>
 
     <!-- Download Section -->
-    <div class="text-center space-x-4">
-      <a id="downloadBtn" class="btn-glow btn btn-lg text-white border-0 px-8 hidden" download="enhanced.png">
+    <div class="text-center">
+      <a id="downloadBtn" class="btn-glow btn btn-lg text-white border-0 px-8 mr-4 hidden" download="enhanced.png">
         💾 Download Enhanced
       </a>
-      <button id="shareBtn" class="btn btn-outline btn-primary btn-lg hidden">
-        🚀 Share Result
-      </button>
-      <a href="/download_csv" class="btn btn-outline btn-accent btn-lg">📊 Download Report</a>
+      <a href="/download_csv" class="btn btn-outline btn-primary btn-lg">📄 Download CSV</a>
     </div>
   </div>
 
-  <!-- Enhanced Info Modal -->
+  <!-- Info Modal -->
   <dialog id="info_modal" class="modal">
-    <div class="modal-box glass max-w-2xl">
-      <h3 class="font-bold text-2xl text-primary mb-6 flex items-center gap-3">
-        <span class="floating-icon">🧠</span> NeuralVision Technology
-      </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="feature-card">
-          <div class="flex items-center space-x-3 mb-3">
-            <span class="text-2xl">🤖</span>
-            <div>
-              <strong>Architecture:</strong><br>
-              <span class="text-sm text-gray-300">CBAM-enhanced Residual Attention U-Net</span>
-            </div>
+    <div class="modal-box glass max-w-md">
+      <h3 class="font-bold text-2xl text-primary mb-6">🧠 Project Information</h3>
+      <div class="space-y-4">
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🤖</span>
+          <div>
+            <strong>Model:</strong> CBAM-enhanced Residual Attention U-Net
           </div>
         </div>
-        <div class="feature-card">
-          <div class="flex items-center space-x-3 mb-3">
-            <span class="text-2xl">⚡</span>
-            <div>
-              <strong>Loss Function:</strong><br>
-              <span class="text-sm text-gray-300">Perceptual + Pixel Loss</span>
-            </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">⚡</span>
+          <div>
+            <strong>Loss:</strong> Perceptual Loss + Pixel Loss
           </div>
         </div>
-        <div class="feature-card">
-          <div class="flex items-center space-x-3 mb-3">
-            <span class="text-2xl">📊</span>
-            <div>
-              <strong>Metrics:</strong><br>
-              <span class="text-sm text-gray-300">PSNR, SSIM, MAE, MSE</span>
-            </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">📊</span>
+          <div>
+            <strong>Metrics:</strong> PSNR, SSIM, MAE, MSE
           </div>
         </div>
-        <div class="feature-card">
-          <div class="flex items-center space-x-3 mb-3">
-            <span class="text-2xl">🎯</span>
-            <div>
-              <strong>Training Data:</strong><br>
-              <span class="text-sm text-gray-300">GoPro Deblurring Dataset</span>
-            </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🎯</span>
+          <div>
+            <strong>Dataset:</strong> GoPro Dataset (Deblurring)
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="text-2xl">🛠️</span>
+          <div>
+            <strong>Framework:</strong> TensorFlow, Flask, Chart.js
           </div>
         </div>
       </div>
       <div class="modal-action">
-        <button class="btn btn-primary" onclick="document.getElementById('info_modal').close()">Got it!</button>
+        <button class="btn btn-primary" onclick="document.getElementById('info_modal').close()">Close</button>
       </div>
     </div>
   </dialog>
 
-  <!-- Toast Notification -->
-  <div id="toast" class="toast">
-    <span id="toastMessage">Processing complete!</span>
-  </div>
-
   <script>
-    let isDragging = false;
-    let startTime = 0;
+    // Initialize Lenis smooth scrolling
+    let lenis;
+    try {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+      });
+      
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+    } catch (error) {
+      console.warn('Lenis not available:', error);
+    }
 
-    // Enhanced file input handler
+    // File input change handler
     document.getElementById("image").addEventListener("change", function(e) {
       const file = e.target.files[0];
       if (file) {
-        if (file.size > 10 * 1024 * 1024) {
-          showToast("File too large! Please choose an image under 10MB.", 'error');
-          return;
-        }
-        displayPreviewImage(file);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const inputPreview = document.getElementById("inputPreview");
+          const originalPlaceholder = document.getElementById("originalPlaceholder");
+          
+          inputPreview.src = e.target.result;
+          inputPreview.classList.remove("hidden");
+          originalPlaceholder.style.display = "none";
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    // Clipboard paste functionality
-    document.getElementById("pasteBtn").addEventListener("click", async function() {
-      try {
-        const clipboardItems = await navigator.clipboard.read();
-        for (const item of clipboardItems) {
-          if (item.types.some(type => type.startsWith('image/'))) {
-            const blob = await item.getType('image/png');
-            const file = new File([blob], 'pasted-image.png', { type: blob.type });
-            displayPreviewImage(file);
-            // Set the file to input
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            document.getElementById('image').files = dt.files;
-            break;
-          }
-        }
-      } catch (err) {
-        showToast("Clipboard access not supported or no image found", 'error');
-      }
-    });
-
-    // Enhanced form submission
+    // Upload form handler
     document.getElementById("upload-form").addEventListener("submit", function (e) {
       e.preventDefault();
       
@@ -511,13 +426,46 @@
       const imageFile = imageInput.files[0];
       
       if (!imageFile) {
-        showToast("Please select an image first!", 'error');
+        alert("Please select an image first!");
         return;
       }
 
-      startTime = performance.now();
-      showLoading();
+      // Show loading with progress
+      const loading = document.getElementById("loading");
+      const enhanceBtn = document.getElementById("enhanceBtn");
+      const progressBar = document.getElementById("progressBar");
       
+      loading.classList.remove("hidden");
+      enhanceBtn.disabled = true;
+      enhanceBtn.textContent = "Processing...";
+
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + "%";
+      }, 200);
+
+      // Hide previous results
+      const outputImg = document.getElementById("output-img");
+      const enhancedPlaceholder = document.getElementById("enhancedPlaceholder");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const chartContainer = document.getElementById("chart-container");
+      const noiseChartContainer = document.getElementById("noise-chart-container");
+      
+      outputImg.classList.add("hidden");
+      enhancedPlaceholder.style.display = "block";
+      downloadBtn.classList.add("hidden");
+      chartContainer.classList.add("hidden");
+      noiseChartContainer.classList.add("hidden");
+
+      // Reset metrics
+      document.getElementById("psnr-value").textContent = "--";
+      document.getElementById("ssim-value").textContent = "--";
+      document.getElementById("mae-value").textContent = "--";
+      document.getElementById("mse-value").textContent = "--";
+
       const formData = new FormData();
       formData.append("image", imageFile);
 
@@ -526,39 +474,75 @@
         body: formData,
       })
       .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         return response.json();
       })
       .then(data => {
-        const processingTime = Math.round(performance.now() - startTime);
-        document.getElementById('processingTime').textContent = `${processingTime} ms`;
-        displayResults(data);
-        showToast("Enhancement complete! 🎉", 'success');
+        clearInterval(progressInterval);
+        progressBar.style.width = "100%";
+        
+        setTimeout(() => {
+          // Display enhanced image
+          const base64Image = data.image;
+          outputImg.src = `data:image/png;base64,${base64Image}`;
+          outputImg.classList.remove("hidden");
+          enhancedPlaceholder.style.display = "none";
+
+          // Update metrics with animation
+          const psnr = parseFloat(data.psnr || 0).toFixed(2);
+          const ssim = parseFloat(data.ssim || 0).toFixed(4);
+          const mae = parseFloat(data.mae || 0).toFixed(4);
+          const mse = parseFloat(data.mse || 0).toFixed(4);
+
+          animateValue("psnr-value", 0, psnr, 1000);
+          animateValue("ssim-value", 0, ssim, 1000);
+          animateValue("mae-value", 0, mae, 1000);
+          animateValue("mse-value", 0, mse, 1000);
+
+          // Show charts
+          chartContainer.classList.remove("hidden");
+          drawMetricChart(psnr, ssim, mae, mse);
+
+          if (data.noise_hist && data.bin_edges) {
+            noiseChartContainer.classList.remove("hidden");
+            drawNoiseHistogram(data.noise_hist, data.bin_edges);
+          }
+
+          // Setup download
+          const blob = b64toBlob(base64Image, "image/png");
+          const blobUrl = URL.createObjectURL(blob);
+          downloadBtn.href = blobUrl;
+          downloadBtn.classList.remove("hidden");
+        }, 500);
       })
       .catch(error => {
+        clearInterval(progressInterval);
         console.error("Error:", error);
-        showToast(`Error: ${error.message}`, 'error');
+        alert("Something went wrong. Please try again. Error: " + error.message);
       })
       .finally(() => {
-        hideLoading();
+        setTimeout(() => {
+          loading.classList.add("hidden");
+          enhanceBtn.disabled = false;
+          enhanceBtn.textContent = "✨ Enhance Image";
+          progressBar.style.width = "0%";
+        }, 1000);
       });
     });
 
     // Enhanced drag and drop
     const uploadZone = document.querySelector('.upload-zone');
     
-    ['dragover', 'dragenter'].forEach(eventName => {
-      uploadZone.addEventListener(eventName, function(e) {
-        e.preventDefault();
-        this.classList.add('drag-over');
-      });
+    uploadZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
     });
-
-    ['dragleave', 'dragend'].forEach(eventName => {
-      uploadZone.addEventListener(eventName, function(e) {
-        e.preventDefault();
-        this.classList.remove('drag-over');
-      });
+    
+    uploadZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
     });
     
     uploadZone.addEventListener('drop', function(e) {
@@ -573,242 +557,28 @@
       }
     });
 
-    // Comparison slider functionality
-    function initComparisonSlider() {
-      const slider = document.getElementById('comparisonSlider');
-      const handle = document.getElementById('sliderHandle');
-      const afterImage = document.getElementById('afterImage');
-      
-      if (!slider || !handle || !afterImage) return;
-
-      handle.addEventListener('mousedown', startDrag);
-      document.addEventListener('mousemove', drag);
-      document.addEventListener('mouseup', stopDrag);
-
-      function startDrag(e) {
-        isDragging = true;
-        e.preventDefault();
-      }
-
-      function drag(e) {
-        if (!isDragging) return;
-        
-        const rect = slider.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-        
-        handle.style.left = `${percentage}%`;
-        afterImage.style.clipPath = `polygon(${percentage}% 0%, 100% 0%, 100% 100%, ${percentage}% 100%)`;
-      }
-
-      function stopDrag() {
-        isDragging = false;
-      }
-    }
-
     // Utility functions
-    function displayPreviewImage(file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const inputPreview = document.getElementById("inputPreview");
-        const originalPlaceholder = document.getElementById("originalPlaceholder");
-        
-        inputPreview.src = e.target.result;
-        inputPreview.classList.remove("hidden");
-        originalPlaceholder.style.display = "none";
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function showLoading() {
-      const loading = document.getElementById("loading");
-      const enhanceBtn = document.getElementById("enhanceBtn");
-      const progressBar = document.getElementById("progressBar");
-      const progressText = document.getElementById("progressText");
-      
-      loading.classList.remove("hidden");
-      enhanceBtn.disabled = true;
-      enhanceBtn.textContent = "Processing...";
-
-      const loadingMessages = [
-        "Initializing neural network...",
-        "Analyzing image structure...", 
-        "Applying deblurring filters...",
-        "Enhancing details...",
-        "Calculating metrics...",
-        "Finalizing results..."
-      ];
-
-      let progress = 0;
-      let messageIndex = 0;
-      
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 12;
-        if (progress > 85) progress = 85;
-        progressBar.style.width = progress + "%";
-        
-        if (Math.random() > 0.7 && messageIndex < loadingMessages.length - 1) {
-          messageIndex++;
-          progressText.textContent = loadingMessages[messageIndex];
-        }
-      }, 300);
-
-      // Store interval for cleanup
-      loading.progressInterval = progressInterval;
-    }
-
-    function hideLoading() {
-      const loading = document.getElementById("loading");
-      const enhanceBtn = document.getElementById("enhanceBtn");
-      const progressBar = document.getElementById("progressBar");
-      
-      // Clear interval
-      if (loading.progressInterval) {
-        clearInterval(loading.progressInterval);
+    function b64toBlob(b64Data, contentType = "", sliceSize = 512) {
+      const byteCharacters = atob(b64Data);
+      const byteArrays = [];
+      for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+        const byteNumbers = Array.from(slice, (char) => char.charCodeAt(0));
+        byteArrays.push(new Uint8Array(byteNumbers));
       }
-      
-      progressBar.style.width = "100%";
-      
-      setTimeout(() => {
-        loading.classList.add("hidden");
-        enhanceBtn.disabled = false;
-        enhanceBtn.textContent = "✨ Enhance with AI";
-        progressBar.style.width = "0%";
-        document.getElementById("progressText").textContent = "Initializing...";
-      }, 800);
-    }
-
-    function displayResults(data) {
-      // Show comparison view
-      document.getElementById('singlePreview').classList.add('hidden');
-      document.getElementById('comparisonView').classList.remove('hidden');
-      
-      // Set images for comparison
-      const beforeImage = document.getElementById('beforeImage');
-      const afterImage = document.getElementById('afterImage');
-      const inputPreview = document.getElementById('inputPreview');
-      
-      beforeImage.src = inputPreview.src;
-      afterImage.src = `data:image/png;base64,${data.image}`;
-      
-      // Initialize comparison slider
-      initComparisonSlider();
-      
-      // Update metrics with animation
-      const psnr = parseFloat(data.psnr || 0);
-      const ssim = parseFloat(data.ssim || 0);
-      const mae = parseFloat(data.mae || 0);
-      const mse = parseFloat(data.mse || 0);
-
-      animateValue("psnr-value", 0, psnr.toFixed(2), 1200);
-      animateValue("ssim-value", 0, ssim.toFixed(4), 1200);
-      animateValue("mae-value", 0, mae.toFixed(4), 1200);
-      animateValue("mse-value", 0, mse.toFixed(4), 1200);
-
-      // Show quality assessment
-      document.getElementById('qualityAssessment').classList.remove('hidden');
-      updateQualityIndicator(psnr, ssim);
-
-      // Show charts
-      document.getElementById('chart-container').classList.remove('hidden');
-      drawMetricChart(psnr, ssim, mae, mse);
-
-      if (data.noise_hist && data.bin_edges) {
-        document.getElementById('noise-chart-container').classList.remove('hidden');
-        drawNoiseHistogram(data.noise_hist, data.bin_edges);
-      }
-
-      // Setup downloads
-      setupDownloads(data.image);
-    }
-
-    function updateQualityIndicator(psnr, ssim) {
-      const indicator = document.getElementById('qualityIndicator');
-      let quality, icon, className;
-      
-      if (psnr > 30 && ssim > 0.9) {
-        quality = 'Excellent'; icon = '🎯'; className = 'quality-excellent';
-      } else if (psnr > 25 && ssim > 0.8) {
-        quality = 'Good'; icon = '👍'; className = 'quality-good';
-      } else if (psnr > 20 && ssim > 0.7) {
-        quality = 'Fair'; icon = '👌'; className = 'quality-fair';
-      } else {
-        quality = 'Improving'; icon = '🔧'; className = 'quality-poor';
-      }
-      
-      indicator.className = `quality-indicator ${className}`;
-      indicator.innerHTML = `<span>${icon}</span> ${quality}`;
-    }
-
-    function setupDownloads(base64Image) {
-      const downloadBtn = document.getElementById('downloadBtn');
-      const shareBtn = document.getElementById('shareBtn');
-      
-      // Download functionality
-      const blob = b64toBlob(base64Image, "image/png");
-      const blobUrl = URL.createObjectURL(blob);
-      downloadBtn.href = blobUrl;
-      downloadBtn.classList.remove('hidden');
-      
-      // Share functionality
-      shareBtn.classList.remove('hidden');
-      shareBtn.addEventListener('click', async () => {
-        if (navigator.share) {
-          try {
-            const file = new File([blob], 'enhanced-image.png', { type: 'image/png' });
-            await navigator.share({
-              title: 'Enhanced Image from NeuralVision',
-              text: 'Check out this AI-enhanced image!',
-              files: [file]
-            });
-          } catch (err) {
-            copyToClipboard(blobUrl);
-          }
-        } else {
-          copyToClipboard(blobUrl);
-        }
-      });
-    }
-
-    function showToast(message, type = 'info') {
-      const toast = document.getElementById('toast');
-      const toastMessage = document.getElementById('toastMessage');
-      
-      toastMessage.textContent = message;
-      toast.classList.add('show');
-      
-      // Auto hide after 4 seconds
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 4000);
-    }
-
-    async function copyToClipboard(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('Link copied to clipboard!', 'success');
-      } catch (err) {
-        showToast('Could not copy to clipboard', 'error');
-      }
+      return new Blob(byteArrays, { type: contentType });
     }
 
     function animateValue(id, start, end, duration) {
       const element = document.getElementById(id);
       const startTime = performance.now();
-      const startNum = parseFloat(start);
-      const endNum = parseFloat(end);
       
       function animate(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
-        const current = startNum + (endNum - startNum) * easeProgress;
+        const current = start + (end - start) * progress;
         
-        if (id.includes('ssim') || id.includes('mae') || id.includes('mse')) {
-          element.textContent = current.toFixed(4);
-        } else {
-          element.textContent = current.toFixed(2);
-        }
+        element.textContent = current.toFixed(id.includes('ssim') || id.includes('mae') || id.includes('mse') ? 4 : 2);
         
         if (progress < 1) {
           requestAnimationFrame(animate);
@@ -827,9 +597,9 @@
       window.metricChartInstance = new Chart(ctx, {
         type: "doughnut",
         data: {
-          labels: ["PSNR", "SSIM", "Quality", "Clarity"],
+          labels: ["PSNR", "SSIM", "MAE", "MSE"],
           datasets: [{
-            data: [psnr, ssim * 100, (1/mae) * 10, (1/mse) * 1000],
+            data: [psnr, ssim * 100, mae * 100, mse * 100],
             backgroundColor: ["#8b45ff", "#ff6b6b", "#4ecdc4", "#ffe66d"],
             borderWidth: 0,
             hoverBorderWidth: 3,
@@ -845,15 +615,13 @@
               labels: { 
                 color: "#fff",
                 padding: 20,
-                usePointStyle: true,
-                font: { size: 12 }
+                usePointStyle: true
               }
             }
           },
           animation: {
             animateScale: true,
-            animateRotate: true,
-            duration: 1500
+            animateRotate: true
           }
         }
       });
@@ -872,7 +640,7 @@
         data: {
           labels: midpoints,
           datasets: [{
-            label: "Noise Distribution",
+            label: "Noise Pixel Count",
             data: hist,
             borderColor: "#8b45ff",
             backgroundColor: "rgba(139, 69, 255, 0.1)",
@@ -880,8 +648,7 @@
             tension: 0.4,
             pointBackgroundColor: "#8b45ff",
             pointBorderColor: "#fff",
-            pointBorderWidth: 2,
-            pointRadius: 4
+            pointBorderWidth: 2
           }]
         },
         options: {
@@ -894,7 +661,7 @@
           },
           scales: {
             x: { 
-              ticks: { color: "#fff", maxTicksLimit: 8 },
+              ticks: { color: "#fff" },
               grid: { color: "rgba(255,255,255,0.1)" }
             },
             y: { 
@@ -907,89 +674,13 @@
               duration: 1000,
               easing: 'linear',
               from: 1,
-              to: 0.4
+              to: 0.4,
+              loop: true
             }
           }
         }
-      });
+      }); 
     }
-
-    function b64toBlob(b64Data, contentType = "", sliceSize = 512) {
-      const byteCharacters = atob(b64Data);
-      const byteArrays = [];
-      for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-        const slice = byteCharacters.slice(offset, offset + sliceSize);
-        const byteNumbers = Array.from(slice, (char) => char.charCodeAt(0));
-        byteArrays.push(new Uint8Array(byteNumbers));
-      }
-      return new Blob(byteArrays, { type: contentType });
-    }
-
-    // Enhanced features
-    document.getElementById('darkModeToggle').addEventListener('click', function() {
-      const html = document.documentElement;
-      const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', newTheme);
-      this.textContent = newTheme === 'dark' ? '🌓' : '☀️';
-      showToast(`Switched to ${newTheme} mode`, 'info');
-    });
-
-    document.getElementById('fullscreenBtn').addEventListener('click', function() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(() => {
-          this.textContent = '⛶';
-          showToast('Entered fullscreen mode', 'info');
-        });
-      } else {
-        document.exitFullscreen().then(() => {
-          this.textContent = '⛶';
-          showToast('Exited fullscreen mode', 'info');
-        });
-      }
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-      if (e.ctrlKey || e.metaKey) {
-        switch(e.key) {
-          case 'u':
-            e.preventDefault();
-            document.getElementById('image').click();
-            break;
-          case 'v':
-            e.preventDefault();
-            document.getElementById('pasteBtn').click();
-            break;
-          case 'Enter':
-            e.preventDefault();
-            if (!document.getElementById('enhanceBtn').disabled) {
-              document.getElementById('upload-form').dispatchEvent(new Event('submit'));
-            }
-            break;
-        }
-      }
-    });
-
-    // Initialize app
-    document.addEventListener('DOMContentLoaded', function() {
-      showToast('Welcome to NeuralVision! 🧠✨', 'info');
-      
-      // Add helpful tooltips
-      const shortcuts = document.createElement('div');
-      shortcuts.className = 'fixed bottom-4 left-4 text-xs text-gray-400 space-y-1';
-      shortcuts.innerHTML = `
-        <div>💡 Tips:</div>
-        <div>Ctrl+U - Upload file</div>
-        <div>Ctrl+V - Paste from clipboard</div>
-        <div>Ctrl+Enter - Start processing</div>
-      `;
-      document.body.appendChild(shortcuts);
-      
-      setTimeout(() => {
-        shortcuts.style.opacity = '0.6';
-      }, 5000);
-    });
   </script>
 </body>
 </html>
